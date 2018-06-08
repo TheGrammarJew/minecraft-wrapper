@@ -10,6 +10,7 @@ import time
 import json
 import hashlib
 import argparse
+import zipfile
 
 parser = argparse.ArgumentParser(
     description='Build script for Wrapper.py!',
@@ -79,11 +80,31 @@ def build_wrapper(buildargs):
 
     # Hooray for calling zip from system() instead of using proper
     # modules! :D
-    system("ls")
+
     chdir("wrapper")
-    system("zip ../Wrapper.py -r . -x *~ /.git* *.pyc *__pycache__* *test.py")
-    chdir("..")
-    system("zip Wrapper.py LICENSE.txt")
+    zf = zipfile.ZipFile("../Wrapper.py", "w")
+
+    for dirname, subdirs, files in walk("."):
+        if '.git' in subdirs:
+            subdirs.remove('.git')
+        if '__pycache__' in subdirs:
+            subdirs.remove('__pycache__')
+        for f in files:
+            if f.endswith('.pyc') or f.endswith('test.py') or f.endswith('~'):
+                files.remove(f)
+        print(dirname)
+        for filename in files:
+            zf.write(path.join(dirname, filename))
+    chdir('..')
+    zf.write('LICENSE.txt')
+    zf.close()
+
+
+    # system("ls")
+    # chdir("wrapper")
+    # system("zip ../Wrapper.py -r . -x *~ /.git* *.pyc *__pycache__* *test.py")
+    # chdir("..")
+    # system("zip Wrapper.py LICENSE.txt")
 
     wrapper_hash = hashlib.md5(open("./Wrapper.py", "rb").read()).hexdigest()
     with open("./build/Wrapper.py.md5", "w") as f:

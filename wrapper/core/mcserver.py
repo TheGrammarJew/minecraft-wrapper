@@ -24,6 +24,7 @@ import ctypes
 import platform
 import base64
 import copy
+import psutil
 
 try:
     import resource
@@ -700,19 +701,30 @@ class MCServer(object):
         """Returns allocated memory in bytes. This command
         currently only works for *NIX based systems.
         """
-        if not resource or not os.name == "posix":
-            raise OSError(
-                "Your current OS (%s) does not support"
-                " this command at this time." % os.name)
+        # if not resource or not os.name == "posix":
+        #     raise OSError(
+        #         "Your current OS (%s) does not support"
+        #         " this command at this time." % os.name)
+        # if self.proc is None:
+        #     self.log.debug("There is no running server to getmemoryusage().")
+        #     return 0
+        # try:
+        #     with open("/proc/%d/statm" % self.proc.pid) as f:
+        #         getbytes = int(f.read().split(" ")[1]) * resource.getpagesize()
+        #     return getbytes
+        # except Exception as e:
+        #     raise e
+
         if self.proc is None:
-            self.log.debug("There is no running server to getmemoryusage().")
+            self.log.debug("There is no running server to get memeory usage from.")
             return 0
         try:
-            with open("/proc/%d/statm" % self.proc.pid) as f:
-                getbytes = int(f.read().split(" ")[1]) * resource.getpagesize()
-            return getbytes
+            process = psutil.Process(self.proc.pid)
+            memory = process.memory_info()[0]
+            return memory
         except Exception as e:
             raise e
+
 
     @staticmethod
     def getstorageavailable(folder):
